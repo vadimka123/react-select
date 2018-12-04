@@ -2732,12 +2732,12 @@
             menuIsOpen = _props2.menuIsOpen;
         var isFocused = this.state.isFocused;
 
-
-        if (
         // ensure focus is restored correctly when the control becomes enabled
-        isFocused && !isDisabled && prevProps.isDisabled ||
+
+        var ensureFocus_isDisabled = isFocused && !isDisabled && prevProps.isDisabled;
         // ensure focus is on the Input when the menu opens
-        isFocused && menuIsOpen && !prevProps.menuIsOpen) {
+        var ensureFocus_menuIsOpen = isFocused && menuIsOpen && !prevProps.menuIsOpen;
+        if (ensureFocus_isDisabled || ensureFocus_menuIsOpen) {
           this.focusInput();
         }
 
