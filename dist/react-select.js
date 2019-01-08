@@ -5647,7 +5647,7 @@
         }
       }
       // $FlowFixMe HTMLElement type does not have tagName property
-      if (event.target.tagName !== 'INPUT') {
+      if (event.target.tagName !== 'INPUT' && !event.target.getAttribute('draggable')) {
         event.preventDefault();
       }
     };
