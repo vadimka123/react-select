@@ -1,8 +1,8 @@
 import raf from 'raf';
 import React, { Component, PureComponent } from 'react';
-import { css, injectGlobal } from 'emotion';
 import { createPortal, findDOMNode } from 'react-dom';
 import PropTypes from 'prop-types';
+import createEmotion from 'create-emotion';
 import AutosizeInput from 'react-input-autosize';
 import memoizeOne from 'memoize-one';
 import { Transition, TransitionGroup } from 'react-transition-group';
@@ -102,43 +102,13 @@ var possibleConstructorReturn = function (self, call) {
   return call && (typeof call === "object" || typeof call === "function") ? call : self;
 };
 
-var slicedToArray = function () {
-  function sliceIterator(arr, i) {
-    var _arr = [];
-    var _n = true;
-    var _d = false;
-    var _e = undefined;
-
-    try {
-      for (var _i = arr[Symbol.iterator](), _s; !(_n = (_s = _i.next()).done); _n = true) {
-        _arr.push(_s.value);
-
-        if (i && _arr.length === i) break;
-      }
-    } catch (err) {
-      _d = true;
-      _e = err;
-    } finally {
-      try {
-        if (!_n && _i["return"]) _i["return"]();
-      } finally {
-        if (_d) throw _e;
-      }
+var taggedTemplateLiteral = function (strings, raw) {
+  return Object.freeze(Object.defineProperties(strings, {
+    raw: {
+      value: Object.freeze(raw)
     }
-
-    return _arr;
-  }
-
-  return function (arr, i) {
-    if (Array.isArray(arr)) {
-      return arr;
-    } else if (Symbol.iterator in Object(arr)) {
-      return sliceIterator(arr, i);
-    } else {
-      throw new TypeError("Invalid attempt to destructure non-iterable instance");
-    }
-  };
-}();
+  }));
+};
 
 var toConsumableArray = function (arr) {
   if (Array.isArray(arr)) {
@@ -455,9 +425,10 @@ function getMenuPlacement(_ref) {
       if (placement === 'auto' || isFixedPosition) {
         // may need to be constrained after flipping
         var _constrainedHeight = maxHeight;
+        var spaceAbove = isFixedPosition ? viewSpaceAbove : scrollSpaceAbove;
 
-        if (!isFixedPosition && scrollSpaceAbove >= minHeight || isFixedPosition && viewSpaceAbove >= minHeight) {
-          _constrainedHeight = isFixedPosition ? viewSpaceAbove - marginBottom - spacing.controlHeight : scrollSpaceAbove - marginBottom - spacing.controlHeight;
+        if (spaceAbove >= minHeight) {
+          _constrainedHeight = Math.min(spaceAbove - marginBottom - spacing.controlHeight, maxHeight);
         }
 
         return { placement: 'top', maxHeight: _constrainedHeight };
@@ -619,9 +590,10 @@ var Menu = function Menu(props) {
       cx = props.cx,
       getStyles = props.getStyles,
       innerRef = props.innerRef,
-      innerProps = props.innerProps;
+      innerProps = props.innerProps,
+      emotion = props.emotion;
 
-  var cn = cx( /*#__PURE__*/css(getStyles('menu', props)), { menu: true }, className);
+  var cn = cx(emotion.css(getStyles('menu', props)), { menu: true }, className);
 
   return React.createElement(
     'div',
@@ -652,12 +624,13 @@ var MenuList = function MenuList(props) {
       cx = props.cx,
       getStyles = props.getStyles,
       isMulti = props.isMulti,
-      innerRef = props.innerRef;
+      innerRef = props.innerRef,
+      emotion = props.emotion;
 
   return React.createElement(
     'div',
     {
-      className: cx( /*#__PURE__*/css(getStyles('menuList', props)), {
+      className: cx(emotion.css(getStyles('menuList', props)), {
         'menu-list': true,
         'menu-list--is-multi': isMulti
       }, className),
@@ -689,12 +662,13 @@ var NoOptionsMessage = function NoOptionsMessage(props) {
       className = props.className,
       cx = props.cx,
       getStyles = props.getStyles,
-      innerProps = props.innerProps;
+      innerProps = props.innerProps,
+      emotion = props.emotion;
 
   return React.createElement(
     'div',
     _extends({
-      className: cx( /*#__PURE__*/css(getStyles('noOptionsMessage', props)), {
+      className: cx(emotion.css(getStyles('noOptionsMessage', props)), {
         'menu-notice': true,
         'menu-notice--no-options': true
       }, className)
@@ -711,12 +685,13 @@ var LoadingMessage = function LoadingMessage(props) {
       className = props.className,
       cx = props.cx,
       getStyles = props.getStyles,
-      innerProps = props.innerProps;
+      innerProps = props.innerProps,
+      emotion = props.emotion;
 
   return React.createElement(
     'div',
     _extends({
-      className: cx( /*#__PURE__*/css(getStyles('loadingMessage', props)), {
+      className: cx(emotion.css(getStyles('loadingMessage', props)), {
         'menu-notice': true,
         'menu-notice--loading': true
       }, className)
@@ -790,7 +765,8 @@ var MenuPortal = function (_Component2) {
           controlElement = _props.controlElement,
           menuPlacement = _props.menuPlacement,
           position = _props.menuPosition,
-          getStyles = _props.getStyles;
+          getStyles = _props.getStyles,
+          emotion = _props.emotion;
 
       var isFixed = position === 'fixed';
 
@@ -808,7 +784,7 @@ var MenuPortal = function (_Component2) {
       // same wrapper element whether fixed or portalled
       var menuWrapper = React.createElement(
         'div',
-        { className: /*#__PURE__*/ /*#__PURE__*/css(getStyles('menuPortal', state)) },
+        { className: emotion.css(getStyles('menuPortal', state)) },
         children
       );
 
@@ -958,7 +934,7 @@ var createFilter = function createFilter(config) {
 // Assistive text to describe visual elements. Hidden for sighted users.
 var A11yText = function A11yText(props) {
   return React.createElement('span', _extends({
-    className: css({
+    className: props.emotion.css({
       zIndex: 9999,
       border: 0,
       clip: 'rect(1px, 1px, 1px, 1px)',
@@ -993,12 +969,13 @@ var DummyInput = function (_Component) {
           enter = _props.enter,
           exit = _props.exit,
           innerRef = _props.innerRef,
-          props = objectWithoutProperties(_props, ['in', 'out', 'onExited', 'appear', 'enter', 'exit', 'innerRef']);
+          emotion = _props.emotion,
+          props = objectWithoutProperties(_props, ['in', 'out', 'onExited', 'appear', 'enter', 'exit', 'innerRef', 'emotion']);
 
       return React.createElement('input', _extends({
         ref: innerRef
       }, props, {
-        className: css({
+        className: emotion.css({
           // get rid of any default styles
           background: 0,
           border: 0,
@@ -1255,7 +1232,8 @@ var ScrollBlock = function (_PureComponent) {
     value: function render() {
       var _props = this.props,
           children = _props.children,
-          isEnabled = _props.isEnabled;
+          isEnabled = _props.isEnabled,
+          emotion = _props.emotion;
       var touchScrollTarget = this.state.touchScrollTarget;
 
       // bail early if not enabled
@@ -1279,7 +1257,7 @@ var ScrollBlock = function (_PureComponent) {
         null,
         React.createElement('div', {
           onClick: this.blurSelectInput,
-          className: css({ position: 'fixed', left: 0, bottom: 0, right: 0, top: 0 })
+          className: emotion.css({ position: 'fixed', left: 0, bottom: 0, right: 0, top: 0 })
         }),
         React.createElement(
           NodeResolver,
@@ -1460,7 +1438,7 @@ var instructionsAriaMessage = function instructionsAriaMessage(event) {
 
   switch (event) {
     case 'menu':
-      return 'Use Up and Down to choose options, press Backspace to select the currently focused option, press Escape to exit the menu, press Tab to select the option and exit the menu.';
+      return 'Use Up and Down to choose options, press Enter to select the currently focused option, press Escape to exit the menu, press Tab to select the option and exit the menu.';
     case 'input':
       return (label ? label : 'Select') + ' is focused ' + (isSearchable ? ',type to refine list' : '') + ', press Down to open the menu, ' + (isMulti ? ' press left to focus selected values' : '');
     case 'value':
@@ -1536,12 +1514,13 @@ var SelectContainer = function SelectContainer(props) {
       getStyles = props.getStyles,
       innerProps = props.innerProps,
       isDisabled = props.isDisabled,
-      isRtl = props.isRtl;
+      isRtl = props.isRtl,
+      emotion = props.emotion;
 
   return React.createElement(
     'div',
     _extends({
-      className: cx( /*#__PURE__*/css(getStyles('container', props)), {
+      className: cx(emotion.css(getStyles('container', props)), {
         '--is-disabled': isDisabled,
         '--is-rtl': isRtl
       }, className)
@@ -1584,13 +1563,14 @@ var ValueContainer = function (_Component) {
           cx = _props.cx,
           isMulti = _props.isMulti,
           getStyles = _props.getStyles,
-          hasValue = _props.hasValue;
+          hasValue = _props.hasValue,
+          emotion = _props.emotion;
 
 
       return React.createElement(
         'div',
         {
-          className: cx( /*#__PURE__*/css(getStyles('valueContainer', this.props)), {
+          className: cx(emotion.css(getStyles('valueContainer', this.props)), {
             'value-container': true,
             'value-container--is-multi': isMulti,
             'value-container--has-value': hasValue
@@ -1619,13 +1599,14 @@ var IndicatorsContainer = function IndicatorsContainer(props) {
   var children = props.children,
       className = props.className,
       cx = props.cx,
-      getStyles = props.getStyles;
+      getStyles = props.getStyles,
+      emotion = props.emotion;
 
 
   return React.createElement(
     'div',
     {
-      className: cx( /*#__PURE__*/css(getStyles('indicatorsContainer', props)), {
+      className: cx(emotion.css(getStyles('indicatorsContainer', props)), {
         'indicators': true
       }, className)
     },
@@ -1633,20 +1614,23 @@ var IndicatorsContainer = function IndicatorsContainer(props) {
   );
 };
 
+var _templateObject = taggedTemplateLiteral(['@keyframes ', ' {\n      0%, 80%, 100% { opacity: 0; }\n      40% { opacity: 1; }\n    };'], ['@keyframes ', ' {\n      0%, 80%, 100% { opacity: 0; }\n      40% { opacity: 1; }\n    };']);
+
 // ==============================
 // Dropdown & Clear Icons
 // ==============================
 
 var Svg = function Svg(_ref) {
   var size = _ref.size,
-      props = objectWithoutProperties(_ref, ['size']);
+      emotion = _ref.emotion,
+      props = objectWithoutProperties(_ref, ['size', 'emotion']);
   return React.createElement('svg', _extends({
     height: size,
     width: size,
     viewBox: '0 0 20 20',
     'aria-hidden': 'true',
     focusable: 'false',
-    className: /*#__PURE__*/ /*#__PURE__*/css({
+    className: emotion.css({
       display: 'inline-block',
       fill: 'currentColor',
       lineHeight: 1,
@@ -1698,21 +1682,19 @@ var DropdownIndicator = function DropdownIndicator(props) {
       className = props.className,
       cx = props.cx,
       getStyles = props.getStyles,
-      innerProps = props.innerProps;
+      innerProps = props.innerProps,
+      emotion = props.emotion;
 
   return React.createElement(
     'div',
     _extends({}, innerProps, {
-      className: cx( /*#__PURE__*/css(getStyles('dropdownIndicator', props)), {
+      className: cx(emotion.css(getStyles('dropdownIndicator', props)), {
         'indicator': true,
         'dropdown-indicator': true
       }, className)
     }),
-    children
+    children || React.createElement(DownChevron, { emotion: emotion })
   );
-};
-DropdownIndicator.defaultProps = {
-  children: React.createElement(DownChevron, null)
 };
 
 var clearIndicatorCSS = baseCSS;
@@ -1721,22 +1703,19 @@ var ClearIndicator = function ClearIndicator(props) {
       className = props.className,
       cx = props.cx,
       getStyles = props.getStyles,
-      innerProps = props.innerProps;
+      innerProps = props.innerProps,
+      emotion = props.emotion;
 
   return React.createElement(
     'div',
     _extends({}, innerProps, {
-      className: cx( /*#__PURE__*/css(getStyles('clearIndicator', props)), {
+      className: cx(emotion.css(getStyles('clearIndicator', props)), {
         'indicator': true,
         'clear-indicator': true
       }, className)
     }),
-    children
+    children || React.createElement(CrossIcon, { emotion: emotion })
   );
-};
-
-ClearIndicator.defaultProps = {
-  children: React.createElement(CrossIcon, null)
 };
 
 // ==============================
@@ -1761,10 +1740,11 @@ var IndicatorSeparator = function IndicatorSeparator(props) {
   var className = props.className,
       cx = props.cx,
       getStyles = props.getStyles,
-      innerProps = props.innerProps;
+      innerProps = props.innerProps,
+      emotion = props.emotion;
 
   return React.createElement('span', _extends({}, innerProps, {
-    className: cx( /*#__PURE__*/css(getStyles('indicatorSeparator', props)), { 'indicator-separator': true }, className)
+    className: cx(emotion.css(getStyles('indicatorSeparator', props)), { 'indicator-separator': true }, className)
   }));
 };
 
@@ -1773,6 +1753,7 @@ var IndicatorSeparator = function IndicatorSeparator(props) {
 // ==============================
 
 var keyframesName = 'react-select-loading-indicator';
+var keyframesInjected = false;
 
 var loadingIndicatorCSS = function loadingIndicatorCSS(_ref4) {
   var isFocused = _ref4.isFocused,
@@ -1797,9 +1778,10 @@ var loadingIndicatorCSS = function loadingIndicatorCSS(_ref4) {
 var LoadingDot = function LoadingDot(_ref5) {
   var color = _ref5.color,
       delay = _ref5.delay,
-      offset = _ref5.offset;
+      offset = _ref5.offset,
+      emotion = _ref5.emotion;
   return React.createElement('span', {
-    className: css({
+    className: emotion.css({
       animationDuration: '1s',
       animationDelay: delay + 'ms',
       animationIterationCount: 'infinite',
@@ -1816,9 +1798,6 @@ var LoadingDot = function LoadingDot(_ref5) {
   });
 };
 
-// eslint-disable-next-line no-unused-expressions
-injectGlobal('@keyframes ', keyframesName, '{0%,80%,100%{opacity:0;}40%{opacity:1;}};');
-
 var LoadingIndicator = function LoadingIndicator(props) {
   var className = props.className,
       cx = props.cx,
@@ -1826,26 +1805,33 @@ var LoadingIndicator = function LoadingIndicator(props) {
       innerProps = props.innerProps,
       isFocused = props.isFocused,
       isRtl = props.isRtl,
+      emotion = props.emotion,
       colors = props.theme.colors;
 
   var color = isFocused ? colors.neutral80 : colors.neutral20;
 
+  if (!keyframesInjected) {
+    // eslint-disable-next-line no-unused-expressions
+    emotion.injectGlobal(_templateObject, keyframesName);
+    keyframesInjected = true;
+  }
+
   return React.createElement(
     'div',
     _extends({}, innerProps, {
-      className: cx( /*#__PURE__*/css(getStyles('loadingIndicator', props)), {
+      className: cx(emotion.css(getStyles('loadingIndicator', props)), {
         'indicator': true,
         'loading-indicator': true
       }, className)
     }),
-    React.createElement(LoadingDot, { color: color, delay: 0, offset: isRtl }),
-    React.createElement(LoadingDot, { color: color, delay: 160, offset: true }),
-    React.createElement(LoadingDot, { color: color, delay: 320, offset: !isRtl })
+    React.createElement(LoadingDot, { emotion: emotion, color: color, delay: 0, offset: isRtl }),
+    React.createElement(LoadingDot, { emotion: emotion, color: color, delay: 160, offset: true }),
+    React.createElement(LoadingDot, { emotion: emotion, color: color, delay: 320, offset: !isRtl })
   );
 };
 LoadingIndicator.defaultProps = { size: 4 };
 
-var css$1 = function css$$1(_ref) {
+var css = function css(_ref) {
   var isDisabled = _ref.isDisabled,
       isFocused = _ref.isFocused,
       _ref$theme = _ref.theme,
@@ -1883,16 +1869,19 @@ var Control = function Control(props) {
       isDisabled = props.isDisabled,
       isFocused = props.isFocused,
       innerRef = props.innerRef,
-      innerProps = props.innerProps;
+      innerProps = props.innerProps,
+      menuIsOpen = props.menuIsOpen,
+      emotion = props.emotion;
 
   return React.createElement(
     'div',
     _extends({
       ref: innerRef,
-      className: cx( /*#__PURE__*/css(getStyles('control', props)), {
+      className: cx(emotion.css(getStyles('control', props)), {
         'control': true,
         'control--is-disabled': isDisabled,
-        'control--is-focused': isFocused
+        'control--is-focused': isFocused,
+        'control--menu-is-open': menuIsOpen
       }, className)
     }, innerProps),
     children
@@ -1915,16 +1904,24 @@ var Group = function Group(props) {
       Heading = props.Heading,
       headingProps = props.headingProps,
       label = props.label,
-      theme = props.theme;
+      theme = props.theme,
+      emotion = props.emotion,
+      selectProps = props.selectProps;
 
   return React.createElement(
     'div',
     {
-      className: cx( /*#__PURE__*/css(getStyles('group', props)), { 'group': true }, className)
+      className: cx(emotion.css(getStyles('group', props)), { 'group': true }, className)
     },
     React.createElement(
       Heading,
-      _extends({}, headingProps, { theme: theme, getStyles: getStyles, cx: cx }),
+      _extends({}, headingProps, {
+        selectProps: selectProps,
+        emotion: emotion,
+        theme: theme,
+        getStyles: getStyles,
+        cx: cx
+      }),
       label
     ),
     React.createElement(
@@ -1955,10 +1952,12 @@ var GroupHeading = function GroupHeading(props) {
       cx = props.cx,
       getStyles = props.getStyles,
       theme = props.theme,
-      cleanProps = objectWithoutProperties(props, ['className', 'cx', 'getStyles', 'theme']);
+      emotion = props.emotion,
+      selectProps = props.selectProps,
+      cleanProps = objectWithoutProperties(props, ['className', 'cx', 'getStyles', 'theme', 'emotion', 'selectProps']);
 
   return React.createElement('div', _extends({
-    className: cx( /*#__PURE__*/css(getStyles('groupHeading', _extends({ theme: theme }, cleanProps))), { 'group-heading': true }, className)
+    className: cx(emotion.css(getStyles('groupHeading', _extends({ theme: theme }, cleanProps))), { 'group-heading': true }, className)
   }, cleanProps));
 };
 
@@ -1995,12 +1994,12 @@ var Input = function Input(_ref2) {
       isHidden = _ref2.isHidden,
       isDisabled = _ref2.isDisabled,
       theme = _ref2.theme,
-      props = objectWithoutProperties(_ref2, ['className', 'cx', 'getStyles', 'innerRef', 'isHidden', 'isDisabled', 'theme']);
+      emotion = _ref2.emotion,
+      selectProps = _ref2.selectProps,
+      props = objectWithoutProperties(_ref2, ['className', 'cx', 'getStyles', 'innerRef', 'isHidden', 'isDisabled', 'theme', 'emotion', 'selectProps']);
   return React.createElement(
     'div',
-    {
-      className: css(getStyles('input', _extends({ theme: theme }, props)))
-    },
+    { className: emotion.css(getStyles('input', _extends({ theme: theme }, props))) },
     React.createElement(AutosizeInput, _extends({
       className: cx(null, { 'input': true }, className),
       inputRef: innerRef,
@@ -2087,21 +2086,18 @@ var MultiValueRemove = function (_Component) {
     value: function render() {
       var _props = this.props,
           children = _props.children,
-          innerProps = _props.innerProps;
+          innerProps = _props.innerProps,
+          emotion = _props.emotion;
 
       return React.createElement(
         'div',
         innerProps,
-        children
+        children || React.createElement(CrossIcon, { size: 14, emotion: emotion })
       );
     }
   }]);
   return MultiValueRemove;
 }(Component);
-
-MultiValueRemove.defaultProps = {
-  children: React.createElement(CrossIcon, { size: 14 })
-};
 
 var MultiValue = function (_Component2) {
   inherits(MultiValue, _Component2);
@@ -2124,27 +2120,28 @@ var MultiValue = function (_Component2) {
           innerProps = _props2.innerProps,
           isDisabled = _props2.isDisabled,
           removeProps = _props2.removeProps,
-          selectProps = _props2.selectProps;
+          selectProps = _props2.selectProps,
+          emotion = _props2.emotion;
       var Container = components.Container,
           Label = components.Label,
           Remove = components.Remove;
 
 
       var containerInnerProps = _extends({
-        className: cx( /*#__PURE__*/css(getStyles('multiValue', this.props)), {
+        className: cx(emotion.css(getStyles('multiValue', this.props)), {
           'multi-value': true,
           'multi-value--is-disabled': isDisabled
         }, className)
       }, innerProps);
 
       var labelInnerProps = {
-        className: cx( /*#__PURE__*/css(getStyles('multiValueLabel', this.props)), {
+        className: cx(emotion.css(getStyles('multiValueLabel', this.props)), {
           'multi-value__label': true
         }, className)
       };
 
       var removeInnerProps = _extends({
-        className: cx( /*#__PURE__*/css(getStyles('multiValueRemove', this.props)), {
+        className: cx(emotion.css(getStyles('multiValueRemove', this.props)), {
           'multi-value__remove': true
         }, className)
       }, removeProps);
@@ -2168,7 +2165,8 @@ var MultiValue = function (_Component2) {
         React.createElement(Remove, {
           data: data,
           innerProps: removeInnerProps,
-          selectProps: selectProps
+          selectProps: selectProps,
+          emotion: emotion
         })
       );
     }
@@ -2230,13 +2228,15 @@ var Option = function (_Component) {
           isFocused = _props.isFocused,
           isSelected = _props.isSelected,
           innerRef = _props.innerRef,
-          innerProps = _props.innerProps;
+          innerProps = _props.innerProps,
+          emotion = _props.emotion;
+
 
       return React.createElement(
         'div',
         _extends({
           ref: innerRef,
-          className: cx( /*#__PURE__*/css(getStyles('option', this.props)), {
+          className: cx(emotion.css(getStyles('option', this.props)), {
             'option': true,
             'option--is-disabled': isDisabled,
             'option--is-focused': isFocused,
@@ -2269,12 +2269,13 @@ var Placeholder = function Placeholder(props) {
       className = props.className,
       cx = props.cx,
       getStyles = props.getStyles,
-      innerProps = props.innerProps;
+      innerProps = props.innerProps,
+      emotion = props.emotion;
 
   return React.createElement(
     'div',
     _extends({
-      className: cx( /*#__PURE__*/css(getStyles('placeholder', props)), {
+      className: cx(emotion.css(getStyles('placeholder', props)), {
         'placeholder': true
       }, className)
     }, innerProps),
@@ -2282,7 +2283,7 @@ var Placeholder = function Placeholder(props) {
   );
 };
 
-var css$2 = function css$$1(_ref) {
+var css$1 = function css(_ref) {
   var isDisabled = _ref.isDisabled,
       _ref$theme = _ref.theme,
       spacing = _ref$theme.spacing,
@@ -2307,12 +2308,13 @@ var SingleValue = function SingleValue(props) {
       cx = props.cx,
       getStyles = props.getStyles,
       isDisabled = props.isDisabled,
-      innerProps = props.innerProps;
+      innerProps = props.innerProps,
+      emotion = props.emotion;
 
   return React.createElement(
     'div',
     _extends({
-      className: cx( /*#__PURE__*/css(getStyles('singleValue', props)), {
+      className: cx(emotion.css(getStyles('singleValue', props)), {
         'single-value': true,
         'single-value--is-disabled': isDisabled
       }, className)
@@ -2356,7 +2358,7 @@ var defaultComponents = function defaultComponents(props) {
 var defaultStyles = {
   clearIndicator: clearIndicatorCSS,
   container: containerCSS,
-  control: css$1,
+  control: css,
   dropdownIndicator: dropdownIndicatorCSS,
   group: groupCSS,
   groupHeading: groupHeadingCSS,
@@ -2374,7 +2376,7 @@ var defaultStyles = {
   noOptionsMessage: noOptionsMessageCSS,
   option: optionCSS,
   placeholder: placeholderCSS,
-  singleValue: css$2,
+  singleValue: css$1,
   valueContainer: valueContainerCSS
 };
 
@@ -2488,6 +2490,10 @@ var defaultProps = {
 
 var instanceId = 1;
 
+var getEmotion = memoizeOne(function (nonce) {
+  return createEmotion(nonce ? { nonce: nonce } : {});
+});
+
 var Select = function (_Component) {
   inherits(Select, _Component);
 
@@ -2497,9 +2503,7 @@ var Select = function (_Component) {
   // Refs
   // ------------------------------
 
-  // Misc. Instance Properties
-  // ------------------------------
-
+  // TODO
   function Select(props) {
     classCallCheck(this, Select);
 
@@ -2516,11 +2520,15 @@ var Select = function (_Component) {
     var selectValue = cleanValue(value);
     var menuOptions = props.menuIsOpen ? _this.buildMenuOptions(props, selectValue) : { render: [], focusable: [] };
 
+    _this.emotion = getEmotion(props.nonce);
+
     _this.state.menuOptions = menuOptions;
     _this.state.selectValue = selectValue;
     return _this;
-  } // TODO
+  }
 
+  // Misc. Instance Properties
+  // ------------------------------
 
   createClass(Select, [{
     key: 'componentDidMount',
@@ -2824,7 +2832,8 @@ var Select = function (_Component) {
         selectOption: selectOption,
         setValue: setValue,
         selectProps: props,
-        theme: this.getTheme()
+        theme: this.getTheme(),
+        emotion: this.emotion
       };
     }
   }, {
@@ -3150,7 +3159,8 @@ var Select = function (_Component) {
           readOnly: true,
           disabled: isDisabled,
           tabIndex: tabIndex,
-          value: ''
+          value: '',
+          emotion: this.emotion
         });
       }
 
@@ -3163,7 +3173,8 @@ var Select = function (_Component) {
 
       var _commonProps = this.commonProps,
           cx = _commonProps.cx,
-          theme = _commonProps.theme;
+          theme = _commonProps.theme,
+          selectProps = _commonProps.selectProps;
 
 
       return React.createElement(Input, _extends({
@@ -3179,11 +3190,13 @@ var Select = function (_Component) {
         onBlur: this.onInputBlur,
         onChange: this.handleInputChange,
         onFocus: this.onInputFocus,
+        selectProps: selectProps,
         spellCheck: 'false',
         tabIndex: tabIndex,
         theme: theme,
         type: 'text',
-        value: inputValue
+        value: inputValue,
+        emotion: this.emotion
       }, ariaAttributes));
     }
   }, {
@@ -3490,7 +3503,7 @@ var Select = function (_Component) {
               },
               React.createElement(
                 ScrollBlock,
-                { isEnabled: menuShouldBlockScroll },
+                { emotion: _this5.emotion, isEnabled: menuShouldBlockScroll },
                 React.createElement(
                   MenuList$$1,
                   _extends({}, commonProps, {
@@ -3568,7 +3581,7 @@ var Select = function (_Component) {
       if (!this.state.isFocused) return null;
       return React.createElement(
         A11yText,
-        { 'aria-live': 'assertive' },
+        { emotion: this.emotion, 'aria-live': 'assertive' },
         React.createElement(
           'p',
           { id: 'aria-selection-event' },
@@ -3594,7 +3607,8 @@ var Select = function (_Component) {
       var _props13 = this.props,
           className = _props13.className,
           id = _props13.id,
-          isDisabled = _props13.isDisabled;
+          isDisabled = _props13.isDisabled,
+          menuIsOpen = _props13.menuIsOpen;
       var isFocused = this.state.isFocused;
 
 
@@ -3621,7 +3635,8 @@ var Select = function (_Component) {
               onTouchEnd: this.onControlTouchEnd
             },
             isDisabled: isDisabled,
-            isFocused: isFocused
+            isFocused: isFocused,
+            menuIsOpen: menuIsOpen
           }),
           React.createElement(
             ValueContainer,
@@ -3953,8 +3968,12 @@ var _initialiseProps = function _initialiseProps() {
   };
 
   this.onTouchStart = function (_ref5) {
-    var _ref5$touches = slicedToArray(_ref5.touches, 1),
-        touch = _ref5$touches[0];
+    var touches = _ref5.touches;
+
+    var touch = touches.item(0);
+    if (!touch) {
+      return;
+    }
 
     _this7.initialTouchX = touch.clientX;
     _this7.initialTouchY = touch.clientY;
@@ -3962,8 +3981,12 @@ var _initialiseProps = function _initialiseProps() {
   };
 
   this.onTouchMove = function (_ref6) {
-    var _ref6$touches = slicedToArray(_ref6.touches, 1),
-        touch = _ref6$touches[0];
+    var touches = _ref6.touches;
+
+    var touch = touches.item(0);
+    if (!touch) {
+      return;
+    }
 
     var deltaX = Math.abs(touch.clientX - _this7.initialTouchX);
     var deltaY = Math.abs(touch.clientY - _this7.initialTouchY);
@@ -4121,6 +4144,8 @@ var _initialiseProps = function _initialiseProps() {
         }
         break;
       case 'Tab':
+        if (isComposing) return;
+
         if (event.shiftKey || !menuIsOpen || !tabSelectsValue || !focusedOption ||
         // don't capture the event if the menu opens on focus and the focused
         // option is already selected; it breaks the flow of navigation
@@ -4194,6 +4219,12 @@ var _initialiseProps = function _initialiseProps() {
     }
     event.preventDefault();
   };
+};
+
+var defaultProps$1 = {
+  defaultInputValue: '',
+  defaultMenuIsOpen: false,
+  defaultValue: null
 };
 
 var manageState = function manageState(SelectComponent) {
@@ -4284,14 +4315,10 @@ var manageState = function manageState(SelectComponent) {
       }
     }]);
     return StateManager;
-  }(Component), _class.defaultProps = {
-    defaultInputValue: '',
-    defaultMenuIsOpen: false,
-    defaultValue: null
-  }, _temp2;
+  }(Component), _class.defaultProps = defaultProps$1, _temp2;
 };
 
-var defaultProps$1 = {
+var defaultProps$2 = {
   cacheOptions: false,
   defaultOptions: false
 };
@@ -4462,13 +4489,18 @@ var makeAsyncSelect = function makeAsyncSelect(SelectComponent) {
       }
     }]);
     return Async;
-  }(Component), _class.defaultProps = defaultProps$1, _temp;
+  }(Component), _class.defaultProps = defaultProps$2, _temp;
 };
 var Async = makeAsyncSelect(manageState(Select));
 
-var compareOption = function compareOption(inputValue, option) {
-  var candidate = inputValue.toLowerCase();
-  return option.value.toLowerCase() === candidate || option.label.toLowerCase() === candidate;
+var compareOption = function compareOption() {
+  var inputValue = arguments.length > 0 && arguments[0] !== undefined ? arguments[0] : '';
+  var option = arguments[1];
+
+  var candidate = String(inputValue).toLowerCase();
+  var optionValue = String(option.value).toLowerCase();
+  var optionLabel = String(option.label).toLowerCase();
+  return optionValue === candidate || optionLabel === candidate;
 };
 
 var builtins = {
@@ -4491,7 +4523,7 @@ var builtins = {
   }
 };
 
-var defaultProps$2 = _extends({
+var defaultProps$3 = _extends({
   allowCreateWhileLoading: false,
   createOptionPosition: 'last'
 }, builtins);
@@ -4599,7 +4631,7 @@ var makeCreatableSelect = function makeCreatableSelect(SelectComponent) {
       }
     }]);
     return Creatable;
-  }(Component), _class.defaultProps = defaultProps$2, _temp;
+  }(Component), _class.defaultProps = defaultProps$3, _temp;
 };
 var Creatable = manageState(makeCreatableSelect(Select));
 
@@ -4658,11 +4690,20 @@ var Collapse = function (_Component) {
       exited: { width: 0 }
     }, _this.getWidth = function (ref) {
       if (ref && isNaN(_this.state.width)) {
+        /*
+          Here we're invoking requestAnimationFrame with a callback invoking our
+          call to getBoundingClientRect and setState in order to resolve an edge case
+          around portalling. Certain portalling solutions briefly remove children from the DOM
+          before appending them to the target node. This is to avoid us trying to call getBoundingClientrect
+          while the Select component is in this state.
+        */
         // cannot use `offsetWidth` because it is rounded
-        var _ref$getBoundingClien = ref.getBoundingClientRect(),
-            _width = _ref$getBoundingClien.width;
+        _this.rafID = window.requestAnimationFrame(function () {
+          var _ref$getBoundingClien = ref.getBoundingClientRect(),
+              width = _ref$getBoundingClien.width;
 
-        _this.setState({ width: _width });
+          _this.setState({ width: width });
+        });
       }
     }, _this.getStyle = function (width) {
       return {
@@ -4675,16 +4716,23 @@ var Collapse = function (_Component) {
     }, _temp), possibleConstructorReturn(_this, _ret);
   }
 
-  // width must be calculated; cannot transition from `undefined` to `number`
-
-
-  // get base styles
-
-
-  // get transition styles
-
-
   createClass(Collapse, [{
+    key: 'componentWillUnmount',
+    value: function componentWillUnmount() {
+      if (this.rafID) {
+        window.cancelAnimationFrame(this.rafID);
+      }
+    }
+
+    // width must be calculated; cannot transition from `undefined` to `number`
+
+
+    // get base styles
+
+
+    // get transition styles
+
+  }, {
     key: 'render',
     value: function render() {
       var _this2 = this;
