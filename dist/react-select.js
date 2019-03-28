@@ -1983,11 +1983,12 @@
     var context = arguments.length > 1 && arguments[1] !== undefined ? arguments[1] : {};
     var isSearchable = context.isSearchable,
         isMulti = context.isMulti,
-        label = context.label;
+        label = context.label,
+        isDisabled = context.isDisabled;
 
     switch (event) {
       case 'menu':
-        return 'Use Up and Down to choose options, press Enter to select the currently focused option, press Escape to exit the menu, press Tab to select the option and exit the menu.';
+        return "Use Up and Down to choose options".concat(isDisabled ? '' : ', press Enter to select the currently focused option', ", press Escape to exit the menu, press Tab to select the option and exit the menu.");
 
       case 'input':
         return "".concat(label ? label : 'Select', " is focused ").concat(isSearchable ? ',type to refine list' : '', ", press Down to open the menu, ").concat(isMulti ? ' press left to focus selected values' : '');
@@ -1997,7 +1998,8 @@
     }
   };
   var valueEventAriaMessage = function valueEventAriaMessage(event, context) {
-    var value = context.value;
+    var value = context.value,
+        isDisabled = context.isDisabled;
     if (!value) return;
 
     switch (event) {
@@ -2007,7 +2009,7 @@
         return "option ".concat(value, ", deselected.");
 
       case 'select-option':
-        return "option ".concat(value, ", selected.");
+        return isDisabled ? "option ".concat(value, " is disabled. Select another option.") : "option ".concat(value, ", selected.");
     }
   };
   var valueFocusAriaMessage = function valueFocusAriaMessage(_ref) {
@@ -2020,7 +2022,7 @@
     var focusedOption = _ref2.focusedOption,
         getOptionLabel = _ref2.getOptionLabel,
         options = _ref2.options;
-    return "option ".concat(getOptionLabel(focusedOption), " focused, ").concat(options.indexOf(focusedOption) + 1, " of ").concat(options.length, ".");
+    return "option ".concat(getOptionLabel(focusedOption), " focused").concat(focusedOption.isDisabled ? ' disabled' : '', ", ").concat(options.indexOf(focusedOption) + 1, " of ").concat(options.length, ".");
   };
   var resultsAriaMessage = function resultsAriaMessage(_ref3) {
     var inputValue = _ref3.inputValue,
@@ -3094,10 +3096,9 @@
         var _this$props3 = _this.props,
             blurInputOnSelect = _this$props3.blurInputOnSelect,
             isMulti = _this$props3.isMulti;
+        var selectValue = _this.state.selectValue;
 
         if (isMulti) {
-          var selectValue = _this.state.selectValue;
-
           if (_this.isOptionSelected(newValue, selectValue)) {
             var candidate = _this.getOptionValue(newValue);
 
@@ -3112,7 +3113,29 @@
               }
             });
           } else {
-            _this.setValue([].concat(_toConsumableArray(selectValue), [newValue]), 'select-option', newValue);
+            if (!_this.isOptionDisabled(newValue, selectValue)) {
+              _this.setValue([].concat(_toConsumableArray(selectValue), [newValue]), 'select-option', newValue);
+
+              _this.announceAriaLiveSelection({
+                event: 'select-option',
+                context: {
+                  value: _this.getOptionLabel(newValue)
+                }
+              });
+            } else {
+              // announce that option is disabled
+              _this.announceAriaLiveSelection({
+                event: 'select-option',
+                context: {
+                  value: _this.getOptionLabel(newValue),
+                  isDisabled: true
+                }
+              });
+            }
+          }
+        } else {
+          if (!_this.isOptionDisabled(newValue, selectValue)) {
+            _this.setValue(newValue, 'select-option');
 
             _this.announceAriaLiveSelection({
               event: 'select-option',
@@ -3120,16 +3143,16 @@
                 value: _this.getOptionLabel(newValue)
               }
             });
+          } else {
+            // announce that option is disabled
+            _this.announceAriaLiveSelection({
+              event: 'select-option',
+              context: {
+                value: _this.getOptionLabel(newValue),
+                isDisabled: true
+              }
+            });
           }
-        } else {
-          _this.setValue(newValue, 'select-option');
-
-          _this.announceAriaLiveSelection({
-            event: 'select-option',
-            context: {
-              value: _this.getOptionLabel(newValue)
-            }
-          });
         }
 
         if (blurInputOnSelect) {
@@ -3263,12 +3286,14 @@
             _this.openMenu('first');
           }
         } else {
-          if (event.currentTarget.tagName !== 'INPUT') {
+          //$FlowFixMe
+          if (event.target.tagName !== 'INPUT') {
             _this.onMenuClose();
           }
-        }
+        } //$FlowFixMe
 
-        if (event.currentTarget.tagName !== 'INPUT' && !event.currentTarget.getAttribute('draggable')) {
+
+        if (event.target.tagName !== 'INPUT') {
           event.preventDefault();
         }
       });
@@ -3366,8 +3391,10 @@
 
       _defineProperty(_assertThisInitialized(_assertThisInitialized(_this)), "onTouchEnd", function (event) {
         if (_this.userIsDragging) return; // close the menu if the user taps outside
+        // we're checking on event.target here instead of event.currentTarget, because we want to assert information
+        // on events on child elements, not the document (which we've attached this handler to).
 
-        if (_this.controlRef && !_this.controlRef.contains(event.currentTarget) && _this.menuListRef && !_this.menuListRef.contains(event.currentTarget)) {
+        if (_this.controlRef && !_this.controlRef.contains(event.target) && _this.menuListRef && !_this.menuListRef.contains(event.target)) {
           _this.blurInput();
         } // reset move vars
 
@@ -3930,6 +3957,12 @@
           focusedOption: options[nextFocus],
           focusedValue: null
         });
+        this.announceAriaLiveContext({
+          event: 'menu',
+          context: {
+            isDisabled: isOptionDisabled(options[nextFocus])
+          }
+        });
       }
     }, {
       key: "getTheme",
@@ -4199,7 +4232,7 @@
             var items = item.options;
             var children = items.map(function (child, i) {
               var option = toOption(child, "".concat(itemIndex, "-").concat(i));
-              if (option && !option.isDisabled) acc.focusable.push(child);
+              if (option) acc.focusable.push(child);
               return option;
             }).filter(Boolean);
 
@@ -4217,7 +4250,7 @@
 
             if (option) {
               acc.render.push(option);
-              if (!option.isDisabled) acc.focusable.push(item);
+              acc.focusable.push(item);
             }
           }
 
