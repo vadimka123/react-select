@@ -1038,9 +1038,8 @@ var colors = {
   }, {
     key: "componentDidUpdate",
     value: function(prevProps) {
-      var _this$props9 = this.props, isDisabled = _this$props9.isDisabled, menuIsOpen = _this$props9.menuIsOpen, isFocused = this.state.isFocused;
-      (isFocused && !isDisabled && prevProps.isDisabled || isFocused && menuIsOpen && !prevProps.menuIsOpen) && this.focusInput(), 
-      this.menuListRef && this.focusedOptionRef && this.scrollToFocusedOptionOnUpdate && __chunk_1.scrollIntoView(this.menuListRef, this.focusedOptionRef), 
+      var _this$props9 = this.props, isDisabled = _this$props9.isDisabled, menuIsOpen = _this$props9.menuIsOpen, isFocused = this.state.isFocused, ensureFocus_isDisabled = isFocused && !isDisabled && prevProps.isDisabled, ensureFocus_menuIsOpen = isFocused && menuIsOpen && !prevProps.menuIsOpen;
+      (ensureFocus_isDisabled || ensureFocus_menuIsOpen) && this.focusInput(), this.menuListRef && this.focusedOptionRef && this.scrollToFocusedOptionOnUpdate && __chunk_1.scrollIntoView(this.menuListRef, this.focusedOptionRef), 
       this.scrollToFocusedOptionOnUpdate = !1;
     }
   }, {
