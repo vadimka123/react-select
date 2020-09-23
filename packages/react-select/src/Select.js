@@ -370,6 +370,7 @@ export default class Select extends Component<Props, State> {
 
     const selectValue = cleanValue(value);
 
+    this.getCx = memoizeOne(this.getCx).bind(this);
     this.buildMenuOptions = memoizeOne(
       this.buildMenuOptions,
       (newArgs: any, lastArgs: any) => {
@@ -380,6 +381,7 @@ export default class Select extends Component<Props, State> {
           && isEqual(newProps.inputValue, lastProps.inputValue)
           && isEqual(newProps.options, lastProps.options);
       }).bind(this);
+
     const menuOptions = props.menuIsOpen
       ? this.buildMenuOptions(props, selectValue)
       : { render: [], focusable: [] };
@@ -742,14 +744,15 @@ export default class Select extends Component<Props, State> {
     };
   }
 
+  getCommonValue = () => this.state.selectValue;
+
   getCommonProps() {
     const { clearValue, getStyles, setValue, selectOption, props } = this;
     const { classNamePrefix, isMulti, isRtl, options } = props;
-    const { selectValue } = this.state;
     const hasValue = this.hasValue();
-    const getValue = () => selectValue;
+    const getValue = this.getCommonValue;
 
-    const cx = classNames.bind(null, classNamePrefix);
+    const cx = this.getCx(classNamePrefix);
     return {
       cx,
       clearValue,
@@ -1290,6 +1293,14 @@ export default class Select extends Component<Props, State> {
     }
     event.preventDefault();
   };
+
+  // ==============================
+  // ClassNames instance
+  // ==============================
+
+  getCx = (classNamePrefix: string | null) => {
+     return classNames.bind(null, classNamePrefix);
+  }
 
   // ==============================
   // Menu Options
