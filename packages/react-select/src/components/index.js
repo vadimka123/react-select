@@ -77,6 +77,12 @@ export type SelectComponents = {
   ValueContainer: ComponentType<ValueContainerProps>,
 };
 
+export type MultiValueSelectComponents = {
+  Container: ComponentType<any>,
+  Label: ComponentType<any>,
+  Remove: ComponentType<any>,
+};
+
 export type SelectComponentsConfig = $Shape<SelectComponents>;
 
 export const components = {

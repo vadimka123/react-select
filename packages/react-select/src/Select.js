@@ -44,6 +44,7 @@ import {
   type PlaceholderOrValue,
   type SelectComponents,
   type SelectComponentsConfig,
+  type MultiValueSelectComponents,
 } from './components/index';
 
 import { defaultStyles, type StylesConfig } from './styles';
@@ -328,6 +329,7 @@ export default class Select extends Component<Props, State> {
   clearFocusValueOnUpdate: boolean = false;
   commonProps: any; // TODO
   components: SelectComponents;
+  multiValueComponents: MultiValueSelectComponents;
   hasGroups: boolean = false;
   initialTouchX: number = 0;
   initialTouchY: number = 0;
@@ -457,6 +459,16 @@ export default class Select extends Component<Props, State> {
   }
   cacheComponents = (components: SelectComponents) => {
     this.components = defaultComponents({ components });
+    const {
+      MultiValueContainer,
+      MultiValueLabel,
+      MultiValueRemove,
+    } = this.components;
+    this.multiValueComponents = {
+      Container: MultiValueContainer,
+      Label: MultiValueLabel,
+      Remove: MultiValueRemove,
+    };
   };
   // ==============================
   // Consumer Handlers
@@ -1478,9 +1490,6 @@ export default class Select extends Component<Props, State> {
   renderPlaceholderOrValue(): ?PlaceholderOrValue {
     const {
       MultiValue,
-      MultiValueContainer,
-      MultiValueLabel,
-      MultiValueRemove,
       SingleValue,
       Placeholder,
     } = this.components;
@@ -1514,11 +1523,7 @@ export default class Select extends Component<Props, State> {
         return (
           <MultiValue
             {...commonProps}
-            components={{
-              Container: MultiValueContainer,
-              Label: MultiValueLabel,
-              Remove: MultiValueRemove,
-            }}
+            components={this.multiValueComponents}
             isFocused={isOptionFocused}
             isDisabled={isDisabled}
             key={`${this.getOptionValue(opt)}${index}`}
