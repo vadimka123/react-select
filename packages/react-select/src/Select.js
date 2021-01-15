@@ -82,7 +82,7 @@ export type Props = {
   'aria-labelledby'?: string,
   /* Focus the control when it is mounted */
   autoFocus?: boolean,
-  /* Remove the currently focused option when the user presses backspace */
+  /* Remove the currently focused option when the user presses backspace when Select isClearable or isMulti */
   backspaceRemovesValue: boolean,
   /* Remove focus from the input when the user selects an option (handy for dismissing the keyboard on touch devices) */
   blurInputOnSelect: boolean,
@@ -445,6 +445,11 @@ export default class Select extends Component<Props, State> {
       this.focusInput();
     }
 
+    if (isFocused && isDisabled && !prevProps.isDisabled) {
+      // ensure select state gets blurred in case Select is programatically disabled while focused
+      this.setState({ isFocused: false }, this.onMenuClose);
+    }
+
     // scroll the focused option into view if necessary
     if (
       this.menuListRef &&
@@ -513,7 +518,7 @@ export default class Select extends Component<Props, State> {
   openMenu(focusOption: 'first' | 'last') {
     const { selectValue, isFocused } = this.state;
     const menuOptions = this.buildMenuOptions(this.props, selectValue);
-    const { isMulti } = this.props;
+    const { isMulti, tabSelectsValue } = this.props;
     let openAtIndex =
       focusOption === 'first' ? 0 : menuOptions.focusable.length - 1;
 
@@ -536,7 +541,10 @@ export default class Select extends Component<Props, State> {
       },
       () => {
         this.onMenuOpen();
-        this.announceAriaLiveContext({ event: 'menu' });
+        this.announceAriaLiveContext({
+          event: 'menu',
+          context: { tabSelectsValue },
+        });
       }
     );
   }
@@ -594,7 +602,7 @@ export default class Select extends Component<Props, State> {
   }
 
   focusOption(direction: FocusDirection = 'first') {
-    const { pageSize } = this.props;
+    const { pageSize, tabSelectsValue } = this.props;
     const { focusedOption, menuOptions } = this.state;
     const options = menuOptions.focusable;
 
@@ -603,7 +611,10 @@ export default class Select extends Component<Props, State> {
     let focusedIndex = options.indexOf(focusedOption);
     if (!focusedOption) {
       focusedIndex = -1;
-      this.announceAriaLiveContext({ event: 'menu' });
+      this.announceAriaLiveContext({
+        event: 'menu',
+        context: { tabSelectsValue },
+      });
     }
 
     if (direction === 'up') {
@@ -626,7 +637,10 @@ export default class Select extends Component<Props, State> {
     });
     this.announceAriaLiveContext({
       event: 'menu',
-      context: { isDisabled: isOptionDisabled(options[nextFocus]) },
+      context: {
+        isDisabled: isOptionDisabled(options[nextFocus]),
+        tabSelectsValue,
+      },
     });
   }
   onChange = (newValue: ValueType, actionMeta: ActionMeta) => {
@@ -718,8 +732,7 @@ export default class Select extends Component<Props, State> {
     this.focusInput();
   };
   clearValue = () => {
-    const { isMulti } = this.props;
-    this.onChange(isMulti ? [] : null, { action: 'clear' });
+    this.onChange(null, { action: 'clear' });
   };
   popValue = () => {
     const { selectValue } = this.state;
@@ -1716,6 +1729,7 @@ export default class Select extends Component<Props, State> {
               Heading={GroupHeading}
               headingProps={{
                 id: headingId,
+                data: item.data,
               }}
               label={this.formatGroupLabel(item.data)}
             >
