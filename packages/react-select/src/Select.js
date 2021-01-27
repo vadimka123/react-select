@@ -380,6 +380,7 @@ export default class Select extends Component<Props, State> {
 
         return (
           isEqual(newSelectValue, lastSelectValue) &&
+          isEqual(newProps.menuIsOpen, lastProps.menuIsOpen) &&
           isEqual(newProps.inputValue, lastProps.inputValue) &&
           isEqual(newProps.options, lastProps.options)
         );
